@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { Header } from './components/layout/Header';
+import { HeroBanner } from './components/home/HeroBanner';
 
 function App() {
-  const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState(2);
+  const [activeCategory, setActiveCategory] = useState<string | null>('Groceries');
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Header
         cartCount={cartCount}
+        activeCategory={activeCategory}
+        onSelectCategory={(cat) => setActiveCategory(cat)}
         onSearch={(query) => console.log('Search query:', query)}
-        onCartClick={() => console.log('Cart clicked')}
-        onAuthClick={() => console.log('Auth clicked')}
+        onCartClick={() => alert('Cart clicked')}
+        onAuthClick={() => alert('Auth clicked')}
       />
 
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-        {/* Content will be mounted here */}
+      <main className="flex-1">
+        <HeroBanner />
       </main>
     </div>
   );

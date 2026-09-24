@@ -18,16 +18,18 @@ interface HeaderProps {
   onSearch?: (query: string) => void;
   onCartClick?: () => void;
   onAuthClick?: () => void;
+  activeCategory?: string | null;
+  onSelectCategory?: (category: string | null) => void;
 }
 
 const CATEGORIES = [
   'Groceries',
   'Premium Fruits',
-  'Home Improvement',
+  'Home & Kitchen',
+  'Fashion',
   'Electronics',
-  'Fashion & Apparel',
-  'Beauty & Care',
-  'Toys & Sports'
+  'Beauty',
+  'Home Improvement'
 ];
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,10 +38,23 @@ export const Header: React.FC<HeaderProps> = ({
   onSearch,
   onCartClick,
   onAuthClick,
+  activeCategory: externalActiveCategory,
+  onSelectCategory
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [internalActiveCategory, setInternalActiveCategory] = useState<string | null>('Groceries');
+
+  const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : internalActiveCategory;
+
+  const handleCategoryClick = (category: string) => {
+    const nextCategory = activeCategory === category ? null : category;
+    if (onSelectCategory) {
+      onSelectCategory(nextCategory);
+    } else {
+      setInternalActiveCategory(nextCategory);
+    }
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -186,24 +201,26 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* 3. CATEGORY NAVIGATION STRIP */}
-      <div className="bg-white border-b border-gray-100 hidden md:block">
-        <div className="max-w-7xl mx-auto px-8">
-          <nav className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-none text-xs font-medium text-gray-600">
+      {/* 3. CATEGORY NAVIGATION PILLS STRIP */}
+      <div className="bg-white border-b border-gray-100 hidden md:block py-2.5">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <nav className="flex items-center gap-2.5 overflow-x-auto scrollbar-none text-xs font-medium">
             {CATEGORIES.map((category) => {
               const isActive = activeCategory === category;
               return (
                 <button
                   key={category}
-                  onClick={() => setActiveCategory(isActive ? null : category)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                  onClick={() => handleCategoryClick(category)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all cursor-pointer whitespace-nowrap text-xs ${
                     isActive 
-                      ? 'bg-[#EAF6FC] text-[#008ECC] font-semibold' 
-                      : 'hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-[#008ECC] text-white font-semibold shadow-xs' 
+                      : 'bg-[#F3F9FB] text-gray-700 hover:bg-[#EAF6FC] hover:text-[#008ECC]'
                   }`}
                 >
                   <span>{category}</span>
-                  <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isActive ? 'rotate-180 text-[#008ECC]' : ''}`} />
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${
+                    isActive ? 'text-white rotate-180' : 'text-[#008ECC]'
+                  }`} />
                 </button>
               );
             })}
@@ -222,13 +239,17 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={cat}
                 onClick={() => {
-                  setActiveCategory(cat);
+                  handleCategoryClick(cat);
                   setMobileMenuOpen(false);
                 }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-[#F3F9FB] hover:text-[#008ECC] rounded-lg transition-colors font-medium flex items-center justify-between"
+                className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors font-medium flex items-center justify-between ${
+                  activeCategory === cat
+                    ? 'bg-[#008ECC] text-white'
+                    : 'text-gray-700 hover:bg-[#F3F9FB] hover:text-[#008ECC]'
+                }`}
               >
                 <span>{cat}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
+                <ChevronDown className={`w-4 h-4 ${activeCategory === cat ? 'text-white' : 'text-gray-400'}`} />
               </button>
             ))}
           </div>
