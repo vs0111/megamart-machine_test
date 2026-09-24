@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
 import { HeroBanner } from './components/home/HeroBanner';
 import { DealsSection } from './components/home/DealsSection';
 import { TopCategoriesSection } from './components/home/TopCategoriesSection';
@@ -11,7 +12,7 @@ function App() {
   const [activeCategory, setActiveCategory] = useState<string | null>('Groceries');
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between">
       <Header
         cartCount={cartCount}
         activeCategory={activeCategory}
@@ -21,7 +22,7 @@ function App() {
         onAuthClick={() => alert('Auth clicked')}
       />
 
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-12">
         <HeroBanner />
         <DealsSection
           onProductClick={(p) => alert(`Selected Product: ${p.name}`)}
@@ -40,6 +41,8 @@ function App() {
           onViewAll={() => alert('View all essentials')}
         />
       </main>
+
+      <Footer />
     </div>
   );
 }
