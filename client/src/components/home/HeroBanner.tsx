@@ -5,8 +5,7 @@ import smartwatchImg from '../../assets/smartwatch.jpg';
 interface BannerSlide {
   id: number;
   subtitle: string;
-  titleLine1: string;
-  titleLine2?: string;
+  title: string;
   offer: string;
   bgGradient: string;
   image: string;
@@ -16,7 +15,7 @@ const BANNERS: BannerSlide[] = [
   {
     id: 1,
     subtitle: 'Best Deal Online on smart watches',
-    titleLine1: 'SMART WEARABLE.',
+    title: 'SMART WEARABLE.',
     offer: 'UP to 80% OFF',
     bgGradient: 'from-[#1B233A] to-[#263152]',
     image: smartwatchImg,
@@ -24,8 +23,7 @@ const BANNERS: BannerSlide[] = [
   {
     id: 2,
     subtitle: 'Fresh Organic Produce',
-    titleLine1: 'GROCERIES &',
-    titleLine2: 'ESSENTIALS.',
+    title: 'GROCERIES & ESSENTIALS.',
     offer: 'FLAT 30% OFF',
     bgGradient: 'from-[#123832] to-[#1C4D45]',
     image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80',
@@ -33,7 +31,7 @@ const BANNERS: BannerSlide[] = [
   {
     id: 3,
     subtitle: 'Latest Flagship Smartphones',
-    titleLine1: 'MOBILE PHONES.',
+    title: 'MOBILE PHONES.',
     offer: 'UP to 50% OFF',
     bgGradient: 'from-[#152B46] to-[#1E3A5F]',
     image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80',
@@ -82,18 +80,15 @@ export const HeroBanner: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 w-full items-center gap-6 z-10">
           
           {/* Left Content */}
-          <div className="md:col-span-7 flex flex-col justify-center">
+          <div className="md:col-span-7 flex flex-col justify-center overflow-hidden">
             <span className="text-slate-300 text-sm sm:text-base md:text-lg font-normal mb-1 tracking-wide">
               {activeBanner.subtitle}
             </span>
             
-            {/* Title formatted on single line for smartwatch slide, or multiline if titleLine2 present */}
-            <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-2 leading-tight">
-              <div className="whitespace-nowrap">{activeBanner.titleLine1}</div>
-              {activeBanner.titleLine2 && (
-                <div className="whitespace-nowrap">{activeBanner.titleLine2}</div>
-              )}
-            </div>
+            {/* Title strictly on ONE single line */}
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white mb-2 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+              {activeBanner.title}
+            </h2>
 
             <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-8 tracking-wide">
               {activeBanner.offer}
@@ -116,13 +111,13 @@ export const HeroBanner: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Image */}
+          {/* Right Image Container with rounded-2xl overflow-hidden */}
           <div className="md:col-span-5 flex justify-center md:justify-end relative">
-            <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 flex items-center justify-center">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl bg-white/5">
               <img
                 src={activeBanner.image}
-                alt={activeBanner.titleLine1}
-                className="w-full h-full object-contain filter drop-shadow-2xl hover:scale-105 transition-transform duration-500 rounded-2xl"
+                alt={activeBanner.title}
+                className="w-full h-full object-cover filter drop-shadow-xl hover:scale-105 transition-transform duration-500 rounded-2xl"
               />
             </div>
           </div>
