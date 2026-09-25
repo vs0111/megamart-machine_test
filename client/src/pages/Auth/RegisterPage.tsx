@@ -5,24 +5,19 @@ import { Eye, EyeOff, Lock, Mail, User as UserIcon, ArrowRight, AlertCircle, Che
 import { registerSchema } from '../../utils/validation';
 import type { RegisterSchemaType } from '../../utils/validation';
 import { authService } from '../../services/authService';
-import { useAuthStore } from '../../store/authStore';
 
 interface RegisterPageProps {
   onNavigateLogin?: () => void;
-  onSuccess?: () => void;
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({
   onNavigateLogin,
-  onSuccess,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const setAuth = useAuthStore((state) => state.setAuth);
 
   const {
     register,
@@ -45,14 +40,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     try {
       const response = await authService.register(data);
-      setAuth(response.user, response.token);
-      setSuccessMsg('Account created successfully! Logging you in...');
+      setSuccessMsg(response.message || 'Account created successfully! Redirecting to sign in...');
 
       setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
+        if (onNavigateLogin) {
+          onNavigateLogin();
         }
-      }, 600);
+      }, 1200);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setServerError(err.message);

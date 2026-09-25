@@ -1,47 +1,99 @@
-import type { AuthResponse, LoginFormData, RegisterFormData } from '../types/auth';
+import type { AuthResponse, LoginFormData, RegisterFormData, User } from '../types/auth';
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const API_BASE_URL = 'http://localhost:5000/api/auth';
+
+export interface RegisterSuccessResponse {
+  user: User;
+  message: string;
+}
 
 export const authService = {
+  /**
+   * Login user strictly through the MongoDB Atlas backend.
+   * Generates JWT token upon successful login.
+   */
   async login(data: LoginFormData): Promise<AuthResponse> {
-    await delay(600);
+    try {
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-    if (data.email === 'invalid@demo.com') {
-      throw new Error('Invalid email or password. Please check your credentials.');
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          resData.message || 'No account found or invalid password. Please sign up first.'
+        );
+      }
+
+      return {
+        user: resData.user,
+        token: resData.token,
+      };
+    } catch (err: any) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        throw new Error('Unable to connect to Authentication Server (http://localhost:5000). Please make sure the backend server is running.');
+      }
+      throw err;
     }
-
-    const mockUser = {
-      id: 'u-101',
-      name: data.email.split('@')[0].replace('.', ' ') || 'Demo User',
-      email: data.email,
-    };
-
-    const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.user_${mockUser.id}.${Date.now()}`;
-
-    return {
-      user: mockUser,
-      token: mockToken,
-    };
   },
 
-  async register(data: RegisterFormData): Promise<AuthResponse> {
-    await delay(700);
+  /**
+   * Register new user strictly in MongoDB Atlas database.
+   * Does NOT generate JWT token or log in automatically.
+   */
+  async register(data: RegisterFormData): Promise<RegisterSuccessResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-    if (data.email === 'existing@demo.com') {
-      throw new Error('An account with this email address already exists.');
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          resData.message || 'An account with this email address already exists.'
+        );
+      }
+
+      return {
+        user: resData.user,
+        message: resData.message || 'Account created successfully! Please sign in.',
+      };
+    } catch (err: any) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        throw new Error('Unable to connect to Authentication Server (http://localhost:5000). Please make sure the backend server is running.');
+      }
+      throw err;
+    }
+  },
+
+  /**
+   * Get user profile from MongoDB Atlas using JWT Token.
+   */
+  async getMe(token: string) {
+    const response = await fetch(`${API_BASE_URL}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Invalid or expired authentication session. Please log in again.');
     }
 
-    const mockUser = {
-      id: `u-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-    };
-
-    const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.user_${mockUser.id}.${Date.now()}`;
-
-    return {
-      user: mockUser,
-      token: mockToken,
-    };
+    return response.json();
   },
 };

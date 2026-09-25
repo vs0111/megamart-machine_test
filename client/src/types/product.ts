@@ -1,5 +1,5 @@
-export type ProductSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL';
-export type ProductColor = 'Black' | 'White' | 'Navy' | 'Olive' | 'Beige' | 'Grey';
+export type ProductSize = string;
+export type ProductColor = string;
 
 export interface ProductVariant {
   id: string;
@@ -25,3 +25,26 @@ export interface Product {
   variants: ProductVariant[];
   createdAt?: string;
 }
+
+export interface ProductFilters {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
+  q?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedProductsResponse {
+  data: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+

@@ -1,51 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-
-interface EssentialItem {
-  id: string;
-  name: string;
-  offer: string;
-  image: string;
-}
-
-const DAILY_ESSENTIALS: EssentialItem[] = [
-  {
-    id: 'essentials',
-    name: 'Daily Essentials',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'vegetables',
-    name: 'Vegitables',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'fruits',
-    name: 'Fruits',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=500&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'strawberry',
-    name: 'Strawberry',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=500&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'mango',
-    name: 'Mango',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=500&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'cherry',
-    name: 'Cherry',
-    offer: 'UP to 50% OFF',
-    image: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=500&auto=format&fit=crop&q=80',
-  },
-];
+import { productService } from '../../services/productService';
+import type { Product } from '../../types/product';
 
 interface DailyEssentialsProps {
   onItemSelect?: (name: string) => void;
@@ -56,6 +12,27 @@ export const DailyEssentialsSection: React.FC<DailyEssentialsProps> = ({
   onItemSelect,
   onViewAll,
 }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    productService
+      .getProducts({ category: 'Groceries', limit: 6 })
+      .then((res) => {
+        if (isMounted) {
+          setProducts(res.data);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-8 my-12">
       {/* Section Header */}
@@ -77,35 +54,43 @@ export const DailyEssentialsSection: React.FC<DailyEssentialsProps> = ({
         </button>
       </div>
 
-      {/* Grid of 6 Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
-        {DAILY_ESSENTIALS.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => onItemSelect?.(item.name)}
-            className="group flex flex-col cursor-pointer"
-          >
-            {/* Image Box */}
-            <div className="w-full h-44 sm:h-48 md:h-52 bg-[#F5F7FA] rounded-2xl p-4 flex items-center justify-center border-2 border-slate-100/80 hover:border-[#008ECC] hover:shadow-md hover:bg-white transition-all duration-300 overflow-hidden">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="max-h-full max-w-full object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
+      {/* Grid of Essential Products */}
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-44 bg-slate-200 rounded-2xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
+          {products.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => onItemSelect?.(item.name)}
+              className="group flex flex-col cursor-pointer"
+            >
+              {/* Image Box */}
+              <div className="w-full h-44 sm:h-48 md:h-52 bg-[#F5F7FA] rounded-2xl p-4 flex items-center justify-center border-2 border-slate-100/80 hover:border-[#008ECC] hover:shadow-md hover:bg-white transition-all duration-300 overflow-hidden">
+                <img
+                  src={item.featuredImage || item.images[0]}
+                  alt={item.name}
+                  className="max-h-full max-w-full object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
 
-            {/* Text Info below card */}
-            <div className="mt-3 text-center">
-              <div className="text-xs font-medium text-gray-500 group-hover:text-[#008ECC] transition-colors">
-                {item.name}
-              </div>
-              <div className="text-sm font-extrabold text-gray-900 mt-0.5 tracking-tight">
-                {item.offer}
+              {/* Text Info below card */}
+              <div className="mt-3 text-center">
+                <div className="text-xs font-medium text-gray-500 line-clamp-1 group-hover:text-[#008ECC] transition-colors">
+                  {item.name}
+                </div>
+                <div className="text-sm font-extrabold text-gray-900 mt-0.5 tracking-tight">
+                  ₹{item.minPrice.toLocaleString('en-IN')}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Menu, 
   Search, 
@@ -9,8 +9,11 @@ import {
   Truck, 
   BadgePercent,
   X,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
+import Swal from 'sweetalert2';
+import { productService } from '../../services/productService';
 
 interface HeaderProps {
   cartCount?: number;
@@ -18,19 +21,11 @@ interface HeaderProps {
   onSearch?: (query: string) => void;
   onCartClick?: () => void;
   onAuthClick?: () => void;
+  onLogout?: () => void;
   activeCategory?: string | null;
   onSelectCategory?: (category: string | null) => void;
+  hideCategoryStrip?: boolean;
 }
-
-const CATEGORIES = [
-  'Groceries',
-  'Premium Fruits',
-  'Home & Kitchen',
-  'Fashion',
-  'Electronics',
-  'Beauty',
-  'Home Improvement'
-];
 
 export const Header: React.FC<HeaderProps> = ({
   cartCount = 0,
@@ -38,12 +33,65 @@ export const Header: React.FC<HeaderProps> = ({
   onSearch,
   onCartClick,
   onAuthClick,
+  onLogout,
   activeCategory: externalActiveCategory,
-  onSelectCategory
+  onSelectCategory,
+  hideCategoryStrip = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [internalActiveCategory, setInternalActiveCategory] = useState<string | null>('Groceries');
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [internalActiveCategory, setInternalActiveCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  const handleLogoutClick = () => {
+    setIsUserMenuOpen(false);
+    Swal.fire({
+      title: 'Sign Out?',
+      text: 'Are you sure you want to log out of MegaMart?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#008ECC',
+      cancelButtonColor: '#EF4444',
+      confirmButtonText: 'Yes, Sign Out',
+      cancelButtonText: 'Cancel',
+      customClass: {
+        popup: 'rounded-2xl',
+        confirmButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold cursor-pointer',
+        cancelButton: 'rounded-xl px-5 py-2.5 text-sm font-semibold cursor-pointer',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (onLogout) {
+          onLogout();
+        } else if (onAuthClick) {
+          onAuthClick();
+        }
+        Swal.fire({
+          title: 'Logged Out',
+          text: 'You have been signed out successfully.',
+          icon: 'success',
+          timer: 1800,
+          showConfirmButton: false,
+          customClass: {
+            popup: 'rounded-2xl',
+          },
+        });
+      }
+    });
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    productService.getCategories().then((cats) => {
+      if (isMounted) {
+        setCategories(cats.filter((c) => c !== 'All'));
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const activeCategory = externalActiveCategory !== undefined ? externalActiveCategory : internalActiveCategory;
 
@@ -151,16 +199,64 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* RIGHT: User Auth + Cart */}
           <div className="flex items-center gap-4 md:gap-6">
-            <button
-              type="button"
-              onClick={onAuthClick}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-[#008ECC] transition-colors cursor-pointer py-1"
-            >
-              <User className="w-5 h-5 text-[#008ECC]" />
-              <span className="hidden sm:inline">
-                {user ? user.name : 'Sign Up/Sign In'}
-              </span>
-            </button>
+            {user ? (
+              <div 
+                className="relative py-1 group"
+                onMouseEnter={() => setIsUserMenuOpen(true)}
+                onMouseLeave={() => setIsUserMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-[#008ECC] transition-colors cursor-pointer py-1"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#EAF6FC] text-[#008ECC] flex items-center justify-center font-extrabold text-xs border border-[#BCE3F5] shrink-0">
+                    {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <span className="hidden sm:inline max-w-[120px] truncate font-semibold">
+                    {user.name}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-[#008ECC] transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-[#008ECC]' : ''}`} />
+                </button>
+
+                {/* HOVER / CLICK POPUP MENU */}
+                <div
+                  className={`absolute right-0 top-full mt-1 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 transition-all duration-200 z-50 ${
+                    isUserMenuOpen ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                    <div className="w-10 h-10 rounded-full bg-[#008ECC] text-white flex items-center justify-center font-extrabold text-base shrink-0 shadow-xs">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={handleLogoutClick}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-red-500" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onAuthClick}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-800 hover:text-[#008ECC] transition-colors cursor-pointer py-1"
+              >
+                <User className="w-5 h-5 text-[#008ECC]" />
+                <span className="hidden sm:inline">Sign Up/Sign In</span>
+              </button>
+            )}
 
             <span className="h-5 w-[1px] bg-gray-200 hidden sm:block" />
 
@@ -202,31 +298,33 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* 3. CATEGORY NAVIGATION PILLS STRIP */}
-      <div className="bg-white border-b border-gray-100 hidden md:block py-2.5">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <nav className="flex items-center gap-2.5 overflow-x-auto scrollbar-none text-xs font-medium">
-            {CATEGORIES.map((category) => {
-              const isActive = activeCategory === category;
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all cursor-pointer whitespace-nowrap text-xs ${
-                    isActive 
-                      ? 'bg-[#008ECC] text-white font-semibold shadow-xs' 
-                      : 'bg-[#F3F9FB] text-gray-700 hover:bg-[#EAF6FC] hover:text-[#008ECC]'
-                  }`}
-                >
-                  <span>{category}</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${
-                    isActive ? 'text-white rotate-180' : 'text-[#008ECC]'
-                  }`} />
-                </button>
-              );
-            })}
-          </nav>
+      {!hideCategoryStrip && (
+        <div className="bg-white border-b border-gray-100 hidden md:block py-2.5">
+          <div className="max-w-7xl mx-auto px-4 md:px-8">
+            <nav className="flex items-center gap-2.5 overflow-x-auto scrollbar-none text-xs font-medium">
+              {categories.map((category) => {
+                const isActive = activeCategory === category;
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryClick(category)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all cursor-pointer whitespace-nowrap text-xs ${
+                      isActive 
+                        ? 'bg-[#008ECC] text-white font-semibold shadow-xs' 
+                        : 'bg-[#F3F9FB] text-gray-700 hover:bg-[#EAF6FC] hover:text-[#008ECC]'
+                    }`}
+                  >
+                    <span>{category}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${
+                      isActive ? 'text-white rotate-180' : 'text-[#008ECC]'
+                    }`} />
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MOBILE DRAWER */}
       {mobileMenuOpen && (
@@ -235,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({
             Categories
           </div>
           <div className="space-y-1">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => {
